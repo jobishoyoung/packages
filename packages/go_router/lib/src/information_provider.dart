@@ -33,6 +33,10 @@ enum NavigatingType {
 
   /// Replace the entire [RouteMatchList] with the new location.
   go,
+
+  /// Restore the current match list with
+  /// [RouteInformationState.baseRouteMatchList].
+  restore,
 }
 
 /// The data class to be stored in [RouteInformation.state] to be used by
@@ -48,8 +52,9 @@ class RouteInformationState<T> {
     this.completer,
     this.baseRouteMatchList,
     required this.type,
-  }) : assert((type != NavigatingType.go) ==
-            (completer != null && baseRouteMatchList != null));
+  })  : assert((type == NavigatingType.go || type == NavigatingType.restore) ==
+            (completer == null)),
+        assert((type != NavigatingType.go) == (baseRouteMatchList != null));
 
   /// The extra object used when navigating with [GoRouter].
   final Object? extra;
@@ -178,10 +183,14 @@ class GoRouteInformationProvider extends RouteInformationProvider
   }
 
   /// Restores the current route matches with the `encodedMatchList`.
-  void restore(String location, {required Object encodedMatchList}) {
+  void restore(String location, {required RouteMatchList matchList}) {
     _setValue(
-      location,
-      encodedMatchList,
+      matchList.uri.toString(),
+      RouteInformationState<void>(
+        extra: matchList.extra,
+        baseRouteMatchList: matchList,
+        type: NavigatingType.restore,
+      ),
     );
   }
 
